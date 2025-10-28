@@ -24,7 +24,7 @@ class AdminState(rx.State):
         from app.states.admin_settings_state import AdminSettingsState
 
         settings_state = await self.get_state(AdminSettingsState)
-        await settings_state.initialize_settings()
+        yield settings_state.initialize_settings
         if not self.current_page:
             self.current_page = "App Settings"
 
