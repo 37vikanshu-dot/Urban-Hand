@@ -390,7 +390,7 @@ def categories_page_content() -> rx.Component:
         ),
         delete_confirmation_dialog(),
         class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
-        on_mount=AdminCategoriesState.load_categories,
+        on_mount=[AdminCategoriesState.load_categories],
     )
 
 
@@ -719,9 +719,9 @@ def payment_plans_tab() -> rx.Component:
                 ),
             ),
             plan_editor_modal(),
-            class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
         ),
-        on_mount=AdminPaymentPlansState.load_default_plans,
+        class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
+        on_mount=[AdminPaymentPlansState.load_default_plans],
     )
 
 
@@ -924,6 +924,7 @@ def payment_submissions_tab() -> rx.Component:
         ),
         payment_review_modal(),
         class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
+        on_mount=AdminPaymentSubmissionsState.on_load,
     )
 
 

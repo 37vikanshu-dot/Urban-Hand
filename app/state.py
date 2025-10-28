@@ -109,12 +109,17 @@ class UIState(rx.State):
     @rx.event
     async def on_load(self):
         from app.states.admin_settings_state import AdminSettingsState
+        from app.services.firebase_service import get_providers
 
         settings_state = await self.get_state(AdminSettingsState)
+        yield settings_state.initialize_settings
         self.app_settings = settings_state.app_settings
-        retrieved_categories = settings_state.app_settings.get("service_categories", [])
+        retrieved_categories = self.app_settings.get("service_categories", [])
         if isinstance(retrieved_categories, list):
             self.service_categories = retrieved_categories
+        db_providers = await get_providers()
+        if db_providers:
+            self.providers = db_providers
 
     @rx.var
     def featured_providers(self) -> list[Provider]:

@@ -2,6 +2,7 @@ import reflex as rx
 from typing import Any
 from app.state import Provider, UIState, ServiceCategory
 from app.states.admin_categories_state import AdminCategoriesState
+from app.services.firebase_service import get_providers, save_providers
 import uuid
 
 
@@ -33,8 +34,8 @@ class AdminListingsState(rx.State):
 
     @rx.event
     async def load_listings(self):
-        ui_state = await self.get_state(UIState)
-        self.all_listings = ui_state.providers
+        self.all_listings = await get_providers()
+        await self.sync_ui_state_providers()
 
     @rx.event
     def open_add_modal(self):
@@ -77,7 +78,7 @@ class AdminListingsState(rx.State):
         self.show_listing_modal = False
 
     @rx.event
-    def save_listing(self):
+    async def save_listing(self):
         listing_data = {
             "id": int(self.modal_listing_id)
             if self.modal_is_editing
@@ -102,7 +103,8 @@ class AdminListingsState(rx.State):
         else:
             self.all_listings.append(listing_data)
         self.close_listing_modal()
-        return AdminListingsState.sync_ui_state_providers
+        await save_providers(self.all_listings)
+        yield AdminListingsState.sync_ui_state_providers
 
     @rx.event
     def open_delete_confirm(self, listing_id: str):
@@ -114,10 +116,11 @@ class AdminListingsState(rx.State):
         self.show_delete_confirm = False
 
     @rx.event
-    def delete_listing(self):
+    async def delete_listing(self):
         self.all_listings = [
             p for p in self.all_listings if str(p["id"]) != self.listing_to_delete_id
         ]
+        await save_providers(self.all_listings)
         self.cancel_delete()
         return AdminListingsState.sync_ui_state_providers
 

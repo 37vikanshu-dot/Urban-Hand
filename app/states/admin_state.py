@@ -23,9 +23,10 @@ class AdminState(rx.State):
             return
         from app.states.admin_settings_state import AdminSettingsState
 
+        settings_state = await self.get_state(AdminSettingsState)
+        await settings_state.initialize_settings()
         if not self.current_page:
             self.current_page = "App Settings"
-        yield AdminSettingsState.initialize_settings
 
     @rx.event
     def handle_login_submit(self, form_data: dict[str, str]):

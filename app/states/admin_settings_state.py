@@ -1,6 +1,7 @@
 import reflex as rx
 from typing import Any
 from app.state import ServiceCategory
+from app.services.firebase_service import get_app_settings, save_app_settings
 
 
 class AdminSettingsState(rx.State):
@@ -9,8 +10,11 @@ class AdminSettingsState(rx.State):
     app_settings: dict[str, str | list[ServiceCategory]] = {}
 
     @rx.event
-    def initialize_settings(self):
-        if not self.app_settings:
+    async def initialize_settings(self):
+        settings = await get_app_settings()
+        if settings:
+            self.app_settings = settings
+        else:
             self.app_settings = {
                 "app_name": "Urban Hand",
                 "hero_title": "Connecting Local Hands to Local Needs.",
@@ -38,16 +42,17 @@ class AdminSettingsState(rx.State):
                     {"id": "8", "name": "Others", "icon": "ellipsis", "enabled": True},
                 ],
             }
+            await save_app_settings(self.app_settings)
         yield AdminSettingsState.sync_ui_state
 
     @rx.event
     def handle_setting_change(self, key: str, value: str | list[ServiceCategory]):
         """Update a setting in the local state."""
         self.app_settings[key] = value
-        yield AdminSettingsState.sync_ui_state
 
     @rx.event
-    def save_settings(self):
+    async def save_settings(self):
+        await save_app_settings(self.app_settings)
         yield AdminSettingsState.sync_ui_state
 
     @rx.event
@@ -56,4 +61,6 @@ class AdminSettingsState(rx.State):
 
         ui_state = await self.get_state(UIState)
         ui_state.app_settings = self.app_settings
-        ui_state.service_categories = self.app_settings.get("service_categories", [])
+        retrieved_categories = self.app_settings.get("service_categories", [])
+        if isinstance(retrieved_categories, list):
+            ui_state.service_categories = retrieved_categories

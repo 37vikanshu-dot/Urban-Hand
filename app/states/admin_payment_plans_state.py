@@ -1,6 +1,7 @@
 import reflex as rx
 from typing import TypedDict, Any
 import uuid
+from app.services.firebase_service import get_pricing_plans, save_pricing_plans
 
 
 class PricingPlan(TypedDict):
@@ -34,8 +35,11 @@ class AdminPaymentPlansState(rx.State):
     modal_feature_input: str = ""
 
     @rx.event
-    def load_default_plans(self):
-        if not self.pricing_plans:
+    async def load_default_plans(self):
+        plans = await get_pricing_plans()
+        if plans:
+            self.pricing_plans = plans
+        elif not self.pricing_plans:
             self.pricing_plans = [
                 {
                     "id": str(uuid.uuid4()),
@@ -74,6 +78,7 @@ class AdminPaymentPlansState(rx.State):
                     "active": True,
                 },
             ]
+            await save_pricing_plans(self.pricing_plans)
 
     def _get_plan_index_by_id(self, plan_id: str) -> int:
         for i, plan in enumerate(self.pricing_plans):
@@ -121,13 +126,14 @@ class AdminPaymentPlansState(rx.State):
         ]
 
     @rx.event
-    def save_plan(self):
+    async def save_plan(self):
         if self.modal_is_editing:
             index = self._get_plan_index_by_id(self.modal_plan_data["id"])
             if index != -1:
                 self.pricing_plans[index] = self.modal_plan_data
         else:
             self.pricing_plans.append(self.modal_plan_data)
+        await save_pricing_plans(self.pricing_plans)
         self.close_plan_modal()
 
     @rx.event
@@ -139,5 +145,6 @@ class AdminPaymentPlansState(rx.State):
             ]
 
     @rx.event
-    def delete_plan(self, plan_id: str):
+    async def delete_plan(self, plan_id: str):
         self.pricing_plans = [p for p in self.pricing_plans if p["id"] != plan_id]
+        await save_pricing_plans(self.pricing_plans)

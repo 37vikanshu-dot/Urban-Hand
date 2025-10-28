@@ -48,11 +48,12 @@ class AdminCategoriesState(rx.State):
 
     @rx.event
     async def save_categories(self):
-        """Save the current list of categories to AdminSettingsState."""
+        """Save the current list of categories to AdminSettingsState and database."""
         from app.state import UIState
 
         admin_settings = await self.get_state(AdminSettingsState)
         admin_settings.app_settings["service_categories"] = self.service_categories
+        await admin_settings.save_settings()
         yield UIState.on_load
 
     @rx.event

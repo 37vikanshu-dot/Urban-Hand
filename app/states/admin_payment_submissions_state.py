@@ -2,6 +2,10 @@ import reflex as rx
 from typing import TypedDict, Any
 import datetime
 import uuid
+from app.services.firebase_service import (
+    get_payment_submissions,
+    save_payment_submissions,
+)
 
 
 class PaymentSubmission(TypedDict):
@@ -27,6 +31,10 @@ class AdminPaymentSubmissionsState(rx.State):
     rejection_notes: str = ""
 
     @rx.event
+    async def on_load(self):
+        self.payment_submissions = await get_payment_submissions()
+
+    @rx.event
     async def add_submission(self, application_data: dict, screenshot_file: str):
         from app.states.admin_payment_plans_state import AdminPaymentPlansState
 
@@ -50,6 +58,7 @@ class AdminPaymentSubmissionsState(rx.State):
             application_data=application_data,
         )
         self.payment_submissions.append(submission)
+        await save_payment_submissions(self.payment_submissions)
 
     @rx.event
     def open_review_modal(self, submission: PaymentSubmission):
@@ -82,13 +91,15 @@ class AdminPaymentSubmissionsState(rx.State):
             }
             listing_state.all_listings.append(listing_data)
             await listing_state.sync_ui_state_providers()
+            await save_payment_submissions(self.payment_submissions)
             self.close_review_modal()
 
     @rx.event
-    def reject_payment(self):
+    async def reject_payment(self):
         if self.selected_submission:
             self.selected_submission["status"] = "Rejected"
             self.selected_submission["notes"] = self.rejection_notes
+            await save_payment_submissions(self.payment_submissions)
             self.close_review_modal()
 
     @rx.var
