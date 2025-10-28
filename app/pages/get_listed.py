@@ -57,7 +57,7 @@ class RegistrationState(rx.State):
                 "featured": False,
             }
             listing_state.all_listings.append(listing_data)
-            await listing_state.sync_ui_state_providers()
+            yield listing_state.sync_ui_state_providers
         self.form_submitted = True
 
 

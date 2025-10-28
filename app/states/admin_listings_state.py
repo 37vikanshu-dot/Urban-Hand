@@ -35,7 +35,7 @@ class AdminListingsState(rx.State):
     @rx.event
     async def load_listings(self):
         self.all_listings = await get_providers()
-        await self.sync_ui_state_providers()
+        yield AdminListingsState.sync_ui_state_providers
 
     @rx.event
     def open_add_modal(self):
@@ -102,8 +102,8 @@ class AdminListingsState(rx.State):
                 self.all_listings[index_to_update] = listing_data
         else:
             self.all_listings.append(listing_data)
-        self.close_listing_modal()
         await save_providers(self.all_listings)
+        self.close_listing_modal()
         yield AdminListingsState.sync_ui_state_providers
 
     @rx.event
@@ -122,7 +122,7 @@ class AdminListingsState(rx.State):
         ]
         await save_providers(self.all_listings)
         self.cancel_delete()
-        return AdminListingsState.sync_ui_state_providers
+        yield AdminListingsState.sync_ui_state_providers
 
     @rx.var
     def filtered_listings(self) -> list[Provider]:
