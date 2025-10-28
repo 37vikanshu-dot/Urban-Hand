@@ -41,7 +41,7 @@ class RegistrationState(rx.State):
             )
 
             submission_state = await self.get_state(AdminPaymentSubmissionsState)
-            submission_state.add_submission(self.form_data, screenshot_file)
+            yield submission_state.add_submission(self.form_data, screenshot_file)
         else:
             from app.states.admin_listings_state import AdminListingsState
 
