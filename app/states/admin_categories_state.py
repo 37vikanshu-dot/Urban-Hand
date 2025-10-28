@@ -53,7 +53,7 @@ class AdminCategoriesState(rx.State):
 
         admin_settings = await self.get_state(AdminSettingsState)
         admin_settings.app_settings["service_categories"] = self.service_categories
-        await admin_settings.save_settings()
+        yield admin_settings.save_settings
         yield UIState.on_load
 
     @rx.event

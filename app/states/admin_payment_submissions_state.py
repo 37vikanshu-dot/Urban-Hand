@@ -90,7 +90,7 @@ class AdminPaymentSubmissionsState(rx.State):
                 "featured": self.selected_submission["plan_selected"] != "Basic",
             }
             listing_state.all_listings.append(listing_data)
-            await listing_state.sync_ui_state_providers()
+            yield listing_state.sync_ui_state_providers
             await save_payment_submissions(self.payment_submissions)
             self.close_review_modal()
 
