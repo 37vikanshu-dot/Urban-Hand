@@ -40,14 +40,18 @@ class RegistrationState(rx.State):
                 AdminPaymentSubmissionsState,
             )
 
-            submission_state = await self.get_state(AdminPaymentSubmissionsState)
-            yield submission_state.add_submission(self.form_data, screenshot_file)
+            yield AdminPaymentSubmissionsState.add_submission(
+                self.form_data, screenshot_file
+            )
         else:
             from app.states.admin_listings_state import AdminListingsState
 
             listing_state = await self.get_state(AdminListingsState)
+            new_listing_id = (
+                len(listing_state.all_listings) + 1 if listing_state.all_listings else 1
+            )
             listing_data = {
-                "id": len(listing_state.all_listings) + 1,
+                "id": new_listing_id,
                 "name": self.form_data["business_name"],
                 "category": self.form_data["category"],
                 "location": self.form_data["address"],
