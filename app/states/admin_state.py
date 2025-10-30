@@ -18,13 +18,16 @@ class AdminState(rx.State):
 
     @rx.event
     async def on_load_check_auth(self):
-        if self.is_admin_page and (not self.is_authenticated):
-            yield rx.redirect("/admin/login")
-            return
+        if (
+            self.router.page.path.startswith("/admin")
+            and (not self.router.page.path.endswith("/login"))
+            and (not self.is_authenticated)
+        ):
+            return rx.redirect("/admin/login")
         from app.states.admin_settings_state import AdminSettingsState
 
         settings_state = await self.get_state(AdminSettingsState)
-        yield settings_state.initialize_settings
+        await settings_state.initialize_settings()
         if not self.current_page:
             self.current_page = "App Settings"
 

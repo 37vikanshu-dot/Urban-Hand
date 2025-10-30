@@ -35,7 +35,16 @@ class ProviderApplication(TypedDict):
 class UIState(rx.State):
     """The UI state for the app."""
 
-    service_categories: list[ServiceCategory] = []
+    service_categories: list[ServiceCategory] = [
+        {"id": "1", "name": "Electrician", "icon": "zap", "enabled": True},
+        {"id": "2", "name": "Plumber", "icon": "droplet", "enabled": True},
+        {"id": "3", "name": "Tailor", "icon": "scissors", "enabled": True},
+        {"id": "4", "name": "Carpenter", "icon": "hammer", "enabled": True},
+        {"id": "5", "name": "Tiffin", "icon": "utensils-crossed", "enabled": True},
+        {"id": "6", "name": "Tutor", "icon": "book-user", "enabled": True},
+        {"id": "7", "name": "Photographer", "icon": "camera", "enabled": True},
+        {"id": "8", "name": "Others", "icon": "ellipsis", "enabled": True},
+    ]
     providers: list[Provider] = [
         {
             "id": 1,
@@ -107,19 +116,13 @@ class UIState(rx.State):
     app_settings: dict[str, str | list[ServiceCategory]] = {}
 
     @rx.event
-    async def on_load(self):
+    async def initial_load(self):
+        """Load initial data for the app. Only runs once on the index page."""
         from app.states.admin_settings_state import AdminSettingsState
-        from app.services.firebase_service import get_providers
 
-        settings_state = await self.get_state(AdminSettingsState)
-        yield settings_state.initialize_settings
-        self.app_settings = settings_state.app_settings
-        retrieved_categories = self.app_settings.get("service_categories", [])
-        if isinstance(retrieved_categories, list):
-            self.service_categories = retrieved_categories
-        db_providers = await get_providers()
-        if db_providers:
-            self.providers = db_providers
+        if not self.service_categories or not self.providers:
+            admin_settings = await self.get_state(AdminSettingsState)
+            await admin_settings.initialize_settings()
 
     @rx.var
     def featured_providers(self) -> list[Provider]:

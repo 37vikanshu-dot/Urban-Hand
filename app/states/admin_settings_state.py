@@ -43,7 +43,7 @@ class AdminSettingsState(rx.State):
                 ],
             }
             await save_app_settings(self.app_settings)
-        yield AdminSettingsState.sync_ui_state
+        await self.sync_ui_state()
 
     @rx.event
     def handle_setting_change(self, key: str, value: str | list[ServiceCategory]):
@@ -53,14 +53,18 @@ class AdminSettingsState(rx.State):
     @rx.event
     async def save_settings(self):
         await save_app_settings(self.app_settings)
-        yield AdminSettingsState.sync_ui_state
+        await self.sync_ui_state()
 
     @rx.event
     async def sync_ui_state(self):
         from app.state import UIState
+        from app.services.firebase_service import get_providers
 
         ui_state = await self.get_state(UIState)
         ui_state.app_settings = self.app_settings
         retrieved_categories = self.app_settings.get("service_categories", [])
         if isinstance(retrieved_categories, list):
             ui_state.service_categories = retrieved_categories
+        db_providers = await get_providers()
+        if db_providers:
+            ui_state.providers = db_providers
