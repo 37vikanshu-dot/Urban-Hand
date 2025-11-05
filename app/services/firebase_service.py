@@ -3,6 +3,7 @@ import os
 from supabase import create_client, Client
 from typing import Any
 import logging
+import uuid
 
 
 def get_supabase_client() -> Client | None:
@@ -145,3 +146,60 @@ async def get_recent_user_activity(limit: int = 20) -> list[dict]:
     except Exception as e:
         logging.exception(f"Error fetching recent user activity: {e}")
         return []
+
+
+async def get_business_owners() -> list[dict]:
+    supabase = get_supabase_client()
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("business_owners").select("*").execute()
+        return response.data
+    except Exception as e:
+        logging.exception(f"Error fetching business owners: {e}")
+        return []
+
+
+async def save_business_owners(owners: list[dict]):
+    supabase = get_supabase_client()
+    if not supabase:
+        return
+    try:
+        supabase.table("business_owners").delete().neq(
+            "id", str(uuid.uuid4())
+        ).execute()
+        if owners:
+            supabase.table("business_owners").insert(owners).execute()
+    except Exception as e:
+        logging.exception(f"Error saving business owners: {e}")
+
+
+async def get_owner_by_email(email: str) -> dict | None:
+    supabase = get_supabase_client()
+    if not supabase:
+        return None
+    try:
+        response = (
+            supabase.table("business_owners")
+            .select("*")
+            .eq("email", email)
+            .single()
+            .execute()
+        )
+        return response.data
+    except Exception as e:
+        if "PGRST116" not in str(e):
+            logging.exception(f"Error fetching owner by email: {e}")
+        return None
+
+
+async def update_owner_password(owner_id: str, new_password_hash: str):
+    supabase = get_supabase_client()
+    if not supabase:
+        return
+    try:
+        supabase.table("business_owners").update(
+            {"password_hash": new_password_hash}
+        ).eq("id", owner_id).execute()
+    except Exception as e:
+        logging.exception(f"Error updating password: {e}")

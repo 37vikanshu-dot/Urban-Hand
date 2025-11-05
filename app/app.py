@@ -12,8 +12,11 @@ from app.pages.business_detail import business_detail_page
 from app.pages.get_listed import get_listed_page
 from app.pages.admin_login import admin_login_page
 from app.pages.admin_dashboard import admin_dashboard_page
+from app.pages.owner.login import owner_login_page
+from app.pages.owner.dashboard import owner_dashboard_page
 from app.state import UIState
 from app.states.admin_state import AdminState
+from app.states.business_owner_auth_state import BusinessOwnerAuthState
 
 
 def index() -> rx.Component:
@@ -57,4 +60,10 @@ app.add_page(
     admin_dashboard_page,
     route="/admin/dashboard",
     on_load=AdminState.on_load_check_auth,
+)
+app.add_page(owner_login_page, route="/owner/login")
+app.add_page(
+    owner_dashboard_page,
+    route="/owner/dashboard",
+    on_load=BusinessOwnerAuthState.check_auth,
 )

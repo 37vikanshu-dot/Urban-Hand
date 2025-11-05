@@ -9,6 +9,7 @@ from app.states.admin_payment_submissions_state import (
     PaymentSubmission,
 )
 from app.states.admin_analytics_state import AdminAnalyticsState
+from app.states.admin_business_owners_state import AdminBusinessOwnersState
 from app.state import Provider
 from typing import Any
 
@@ -21,6 +22,7 @@ def admin_sidebar() -> rx.Component:
         {"name": "Categories", "icon": "layout-grid"},
         {"name": "Listings", "icon": "list"},
         {"name": "Payments", "icon": "banknote"},
+        {"name": "Business Owners", "icon": "users"},
         {"name": "Reviews", "icon": "star"},
     ]
     return rx.el.aside(
@@ -190,6 +192,7 @@ def admin_dashboard_page() -> rx.Component:
                         ("Categories", categories_page_content()),
                         ("Listings", listings_page_content()),
                         ("Payments", payments_page_content()),
+                        ("Business Owners", business_owners_page_content()),
                         ("Reviews", rx.el.p("Review management coming soon...")),
                         rx.el.p("Select a page from the sidebar."),
                     ),
@@ -1047,6 +1050,188 @@ def payment_submissions_tab() -> rx.Component:
         payment_review_modal(),
         class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
         on_mount=AdminPaymentSubmissionsState.on_load,
+    )
+
+
+def business_owners_page_content() -> rx.Component:
+    return rx.el.div(
+        rx.el.div(
+            rx.el.h2("Business Owners", class_name="text-xl font-bold"),
+            business_owner_management_modal(),
+            class_name="flex justify-between items-center p-6 border-b",
+        ),
+        rx.el.div(
+            rx.el.div(
+                rx.el.p(
+                    "Name", class_name="font-semibold text-sm text-gray-600 flex-1"
+                ),
+                rx.el.p(
+                    "Linked Business",
+                    class_name="font-semibold text-sm text-gray-600 w-48",
+                ),
+                rx.el.p(
+                    "Actions",
+                    class_name="font-semibold text-sm text-gray-600 w-32 text-right",
+                ),
+                class_name="flex items-center gap-4 px-6 py-3 bg-gray-50/75 border-b",
+            ),
+            rx.el.div(
+                rx.foreach(
+                    AdminBusinessOwnersState.owners,
+                    lambda owner: rx.el.div(
+                        rx.el.div(
+                            rx.el.span(owner["full_name"], class_name="font-medium"),
+                            rx.el.span(
+                                owner["email"],
+                                class_name="text-xs text-gray-500 block mt-1",
+                            ),
+                            class_name="flex-1",
+                        ),
+                        rx.el.span(
+                            AdminBusinessOwnersState.provider_name_map.get(
+                                owner["provider_id"].to_string(), "Not Linked"
+                            ),
+                            class_name="text-sm text-gray-600 w-48",
+                        ),
+                        rx.el.div(
+                            rx.el.button(
+                                rx.icon("key-round", class_name="h-4 w-4"),
+                                on_click=lambda: AdminBusinessOwnersState.open_reset_password_modal(
+                                    owner
+                                ),
+                                variant="ghost",
+                            ),
+                            rx.el.button(
+                                rx.icon("trash-2", class_name="h-4 w-4 text-red-500"),
+                                on_click=lambda: AdminBusinessOwnersState.delete_owner(
+                                    owner["id"]
+                                ),
+                                variant="ghost",
+                            ),
+                            class_name="flex justify-end gap-2 w-32",
+                        ),
+                        class_name="flex items-center gap-4 px-6 py-4 border-b hover:bg-gray-50",
+                    ),
+                )
+            ),
+        ),
+        reset_password_modal(),
+        class_name="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden",
+        on_mount=[AdminBusinessOwnersState.load_data],
+    )
+
+
+def business_owner_management_modal() -> rx.Component:
+    return rx.radix.primitives.dialog.root(
+        rx.radix.primitives.dialog.trigger(
+            rx.el.button(
+                rx.icon("plus", class_name="h-4 w-4 mr-2"),
+                "Add New Owner",
+                on_click=AdminBusinessOwnersState.open_add_modal,
+                class_name="flex items-center bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors",
+            )
+        ),
+        rx.radix.primitives.dialog.content(
+            rx.radix.primitives.dialog.title("Add New Business Owner"),
+            rx.el.form(
+                rx.el.div(
+                    rx.el.label("Full Name", class_name="text-sm font-medium"),
+                    rx.el.input(
+                        name="full_name",
+                        class_name="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm",
+                    ),
+                    class_name="my-2",
+                ),
+                rx.el.div(
+                    rx.el.label("Email", class_name="text-sm font-medium"),
+                    rx.el.input(
+                        name="email",
+                        type="email",
+                        class_name="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm",
+                    ),
+                    class_name="my-2",
+                ),
+                rx.el.div(
+                    rx.el.label("Password", class_name="text-sm font-medium"),
+                    rx.el.input(
+                        name="password",
+                        type="password",
+                        class_name="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm",
+                    ),
+                    class_name="my-2",
+                ),
+                rx.el.div(
+                    rx.el.label(
+                        "Link to Business Listing", class_name="text-sm font-medium"
+                    ),
+                    rx.el.select(
+                        rx.el.option("Select a business...", value="", disabled=True),
+                        rx.foreach(
+                            AdminBusinessOwnersState.unlinked_providers,
+                            lambda p: rx.el.option(
+                                p["name"], value=p["id"].to_string()
+                            ),
+                        ),
+                        name="provider_id",
+                        class_name="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md",
+                    ),
+                    class_name="my-2",
+                ),
+                rx.cond(
+                    AdminBusinessOwnersState.error_message,
+                    rx.el.p(
+                        AdminBusinessOwnersState.error_message,
+                        class_name="text-red-500 text-sm mt-2",
+                    ),
+                    None,
+                ),
+                rx.el.div(
+                    rx.radix.primitives.dialog.close(
+                        rx.el.button(
+                            "Cancel", type="button", variant="soft", color_scheme="gray"
+                        )
+                    ),
+                    rx.el.button("Create Owner Account", type="submit"),
+                    class_name="flex justify-end gap-3 mt-4",
+                ),
+                on_submit=AdminBusinessOwnersState.create_owner_account,
+            ),
+        ),
+        open=AdminBusinessOwnersState.show_add_modal,
+        on_open_change=AdminBusinessOwnersState.set_show_add_modal,
+    )
+
+
+def reset_password_modal() -> rx.Component:
+    return rx.radix.primitives.dialog.root(
+        rx.radix.primitives.dialog.content(
+            rx.radix.primitives.dialog.title("Reset Password"),
+            rx.cond(
+                AdminBusinessOwnersState.selected_owner,
+                rx.el.div(
+                    rx.el.p(
+                        f"Resetting password for {AdminBusinessOwnersState.selected_owner['email']}"
+                    ),
+                    rx.el.input(
+                        placeholder="Enter new password",
+                        on_change=AdminBusinessOwnersState.set_new_password,
+                        type="password",
+                        class_name="w-full rounded-md border-gray-300 mt-4",
+                    ),
+                ),
+            ),
+            rx.el.div(
+                rx.radix.primitives.dialog.close(
+                    rx.el.button("Cancel", variant="soft", color_scheme="gray")
+                ),
+                rx.el.button(
+                    "Reset Password", on_click=AdminBusinessOwnersState.reset_password
+                ),
+                class_name="flex justify-end gap-3 mt-4",
+            ),
+        ),
+        open=AdminBusinessOwnersState.show_reset_password_modal,
+        on_open_change=AdminBusinessOwnersState.set_show_reset_password_modal,
     )
 
 
