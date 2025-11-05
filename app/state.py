@@ -35,78 +35,8 @@ class ProviderApplication(TypedDict):
 class UIState(rx.State):
     """The UI state for the app."""
 
-    service_categories: list[ServiceCategory] = [
-        {"id": "1", "name": "Electrician", "icon": "zap", "enabled": True},
-        {"id": "2", "name": "Plumber", "icon": "droplet", "enabled": True},
-        {"id": "3", "name": "Tailor", "icon": "scissors", "enabled": True},
-        {"id": "4", "name": "Carpenter", "icon": "hammer", "enabled": True},
-        {"id": "5", "name": "Tiffin", "icon": "utensils-crossed", "enabled": True},
-        {"id": "6", "name": "Tutor", "icon": "book-user", "enabled": True},
-        {"id": "7", "name": "Photographer", "icon": "camera", "enabled": True},
-        {"id": "8", "name": "Others", "icon": "ellipsis", "enabled": True},
-    ]
-    providers: list[Provider] = [
-        {
-            "id": 1,
-            "name": "Ramesh Electricals",
-            "category": "Electrician",
-            "location": "A-Block, Malviya Nagar",
-            "rating": 4.8,
-            "reviews": 120,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=ramesh&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": True,
-        },
-        {
-            "id": 2,
-            "name": "Sita's Kitchen",
-            "category": "Tiffin",
-            "location": "Sector 15, Pratapgarh",
-            "rating": 4.9,
-            "reviews": 250,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=sita&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": True,
-        },
-        {
-            "id": 3,
-            "name": "Modern Tailors",
-            "category": "Tailor",
-            "location": "Gandhi Chowk",
-            "rating": 4.7,
-            "reviews": 88,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=modern&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": False,
-        },
-        {
-            "id": 4,
-            "name": "Prakash Plumbers",
-            "category": "Plumber",
-            "location": "Near Bus Stand",
-            "rating": 4.6,
-            "reviews": 95,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=prakash&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": True,
-        },
-        {
-            "id": 5,
-            "name": "Anil Photography",
-            "category": "Photographer",
-            "location": "Civil Lines",
-            "rating": 4.9,
-            "reviews": 150,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=anil&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": False,
-        },
-        {
-            "id": 6,
-            "name": "Guru Coaching",
-            "category": "Tutor",
-            "location": "Shastri Nagar",
-            "rating": 4.8,
-            "reviews": 75,
-            "image_url": "https://api.dicebear.com/9.x/notionists/svg?seed=guru&backgroundColor=c0aede,b6e3f4,d1d4f9",
-            "featured": True,
-        },
-    ]
+    service_categories: list[ServiceCategory] = []
+    providers: list[Provider] = []
     search_query: str = ""
     category_filter: str = "All"
     rating_filter: float = 0.0
@@ -116,13 +46,20 @@ class UIState(rx.State):
     app_settings: dict[str, str | list[ServiceCategory]] = {}
 
     @rx.event
-    async def initial_load(self):
-        """Load initial data for the app. Only runs once on the index page."""
+    async def load_initial_data(self):
+        """Load initial data from the database for the main UI."""
         from app.states.admin_settings_state import AdminSettingsState
+        from app.services.firebase_service import get_providers, get_app_settings
 
-        if not self.service_categories or not self.providers:
-            admin_settings = await self.get_state(AdminSettingsState)
-            await admin_settings.initialize_settings()
+        admin_settings = await self.get_state(AdminSettingsState)
+        await admin_settings.initialize_settings()
+        db_settings = await get_app_settings()
+        db_providers = await get_providers()
+        self.app_settings = db_settings
+        retrieved_categories = db_settings.get("service_categories", [])
+        if isinstance(retrieved_categories, list):
+            self.service_categories = retrieved_categories
+        self.providers = db_providers
 
     @rx.var
     def featured_providers(self) -> list[Provider]:

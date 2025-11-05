@@ -42,7 +42,7 @@ app = rx.App(
         ),
     ],
 )
-app.add_page(index)
+app.add_page(index, on_load=UIState.load_initial_data)
 app.add_page(search_page, route="/search")
 app.add_page(business_detail_page, route="/business/[id]")
 app.add_page(get_listed_page, route="/get-listed")
