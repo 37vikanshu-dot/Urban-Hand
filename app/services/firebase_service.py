@@ -115,3 +115,33 @@ async def save_payment_submissions(submissions: list[dict]):
             ).execute()
     except Exception as e:
         logging.exception(f"Error saving payment submissions: {e}")
+
+
+async def get_business_analytics() -> list[dict]:
+    supabase = get_supabase_client()
+    if not supabase:
+        return []
+    try:
+        response = supabase.table("business_analytics").select("*").execute()
+        return response.data
+    except Exception as e:
+        logging.exception(f"Error fetching business analytics: {e}")
+        return []
+
+
+async def get_recent_user_activity(limit: int = 20) -> list[dict]:
+    supabase = get_supabase_client()
+    if not supabase:
+        return []
+    try:
+        response = (
+            supabase.table("user_analytics")
+            .select("id, event_type, provider_id, timestamp")
+            .order("timestamp", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return response.data
+    except Exception as e:
+        logging.exception(f"Error fetching recent user activity: {e}")
+        return []

@@ -8,6 +8,7 @@ from app.states.admin_payment_submissions_state import (
     AdminPaymentSubmissionsState,
     PaymentSubmission,
 )
+from app.states.admin_analytics_state import AdminAnalyticsState
 from app.state import Provider
 from typing import Any
 
@@ -15,6 +16,7 @@ from typing import Any
 def admin_sidebar() -> rx.Component:
     """The sidebar for the admin dashboard."""
     nav_items = [
+        {"name": "Analytics", "icon": "bar-chart-2"},
         {"name": "App Settings", "icon": "settings"},
         {"name": "Categories", "icon": "layout-grid"},
         {"name": "Listings", "icon": "list"},
@@ -183,6 +185,7 @@ def admin_dashboard_page() -> rx.Component:
                 rx.el.div(
                     rx.match(
                         AdminState.current_page,
+                        ("Analytics", analytics_page_content()),
                         ("App Settings", app_settings_page_content()),
                         ("Categories", categories_page_content()),
                         ("Listings", listings_page_content()),
@@ -307,6 +310,125 @@ def delete_confirmation_dialog() -> rx.Component:
         ),
         open=AdminCategoriesState.show_delete_confirm,
         on_open_change=AdminCategoriesState.set_show_delete_confirm,
+    )
+
+
+def stat_card(
+    icon: str, title: str, value: rx.Var[str | int], color: str
+) -> rx.Component:
+    return rx.el.div(
+        rx.el.div(
+            rx.icon(icon, class_name=f"h-6 w-6 {color}"),
+            class_name="p-3 bg-gray-100 rounded-lg",
+        ),
+        rx.el.div(
+            rx.el.p(title, class_name="text-sm font-medium text-gray-500"),
+            rx.el.p(value, class_name="text-2xl font-bold text-gray-900"),
+        ),
+        class_name="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm",
+    )
+
+
+def analytics_page_content() -> rx.Component:
+    return rx.el.div(
+        rx.el.div(
+            stat_card(
+                "eye", "Total Views", AdminAnalyticsState.total_views, "text-blue-500"
+            ),
+            stat_card(
+                "phone",
+                "Total Calls",
+                AdminAnalyticsState.total_calls,
+                "text-green-500",
+            ),
+            stat_card(
+                "message-circle",
+                "WhatsApp Clicks",
+                AdminAnalyticsState.total_whatsapp_clicks,
+                "text-teal-500",
+            ),
+            stat_card(
+                "share-2",
+                "Total Shares",
+                AdminAnalyticsState.total_shares,
+                "text-indigo-500",
+            ),
+            class_name="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+        ),
+        rx.el.div(
+            rx.el.div(
+                rx.el.h3(
+                    "Top Performing Providers (by Views)",
+                    class_name="text-lg font-semibold text-gray-800",
+                ),
+                rx.el.div(
+                    rx.foreach(
+                        AdminAnalyticsState.top_performing_providers,
+                        lambda stat: rx.el.div(
+                            rx.el.span(stat["name"], class_name="font-medium"),
+                            rx.el.div(
+                                rx.el.span(
+                                    stat["total_views"].to_string(),
+                                    class_name="font-bold text-gray-800",
+                                ),
+                                rx.icon("eye", class_name="h-4 w-4 text-gray-400"),
+                                class_name="flex items-center gap-2",
+                            ),
+                            class_name="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md",
+                        ),
+                    ),
+                    class_name="mt-4 space-y-2",
+                ),
+                class_name="p-6 bg-white rounded-xl border border-gray-200 shadow-sm",
+            ),
+            rx.el.div(
+                rx.el.h3(
+                    "Recent Activity", class_name="text-lg font-semibold text-gray-800"
+                ),
+                rx.el.div(
+                    rx.foreach(
+                        AdminAnalyticsState.recent_activity,
+                        lambda activity: rx.el.div(
+                            rx.el.div(
+                                rx.icon(
+                                    rx.match(
+                                        activity["event_type"],
+                                        ("page_view", "eye"),
+                                        ("call_click", "phone"),
+                                        ("whatsapp_click", "message-circle"),
+                                        ("share_click", "share-2"),
+                                        "alert-circle",
+                                    ),
+                                    class_name="h-5 w-5 text-gray-500",
+                                ),
+                                rx.el.div(
+                                    rx.el.p(
+                                        activity["event_type"]
+                                        .replace("_", " ")
+                                        .capitalize(),
+                                        class_name="font-medium",
+                                    ),
+                                    rx.el.p(
+                                        f"Provider: {activity['provider_name']}",
+                                        class_name="text-sm text-gray-500",
+                                    ),
+                                ),
+                            ),
+                            rx.el.span(
+                                activity["timestamp"],
+                                class_name="text-xs text-gray-500",
+                            ),
+                            class_name="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md",
+                        ),
+                    ),
+                    class_name="mt-4 space-y-2",
+                ),
+                class_name="p-6 bg-white rounded-xl border border-gray-200 shadow-sm",
+            ),
+            class_name="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6",
+        ),
+        class_name="space-y-6",
+        on_mount=AdminAnalyticsState.on_load,
     )
 
 

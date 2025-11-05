@@ -1,6 +1,7 @@
 import reflex as rx
 from app.state import UIState
 from app.components import header, footer
+from app.states.analytics_state import AnalyticsState
 
 
 def business_detail_page() -> rx.Component:
@@ -62,6 +63,9 @@ def business_detail_page() -> rx.Component:
                                 rx.el.button(
                                     rx.icon("phone", class_name="h-5 w-5 mr-2"),
                                     "Call Now",
+                                    on_click=lambda: AnalyticsState.track_call_click(
+                                        UIState.current_provider["id"]
+                                    ),
                                     class_name="w-full flex items-center justify-center bg-blue-500 text-white px-6 py-3 rounded-lg text-md font-semibold hover:bg-blue-600 transition-colors",
                                 ),
                                 rx.el.button(
@@ -69,6 +73,9 @@ def business_detail_page() -> rx.Component:
                                         "message-circle", class_name="h-5 w-5 mr-2"
                                     ),
                                     "Chat on WhatsApp",
+                                    on_click=lambda: AnalyticsState.track_whatsapp_click(
+                                        UIState.current_provider["id"]
+                                    ),
                                     class_name="w-full flex items-center justify-center bg-green-500 text-white px-6 py-3 rounded-lg text-md font-semibold hover:bg-green-600 transition-colors",
                                 ),
                                 rx.el.button(
@@ -79,6 +86,9 @@ def business_detail_page() -> rx.Component:
                                 rx.el.button(
                                     rx.icon("share-2", class_name="h-5 w-5 mr-2"),
                                     "Share Profile",
+                                    on_click=lambda: AnalyticsState.track_share_click(
+                                        UIState.current_provider["id"]
+                                    ),
                                     class_name="w-full flex items-center justify-center bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-md font-semibold hover:bg-gray-300 transition-colors",
                                 ),
                                 class_name="space-y-4",

@@ -42,9 +42,15 @@ app = rx.App(
         ),
     ],
 )
+from app.states.analytics_state import AnalyticsState
+
 app.add_page(index, on_load=UIState.load_initial_data)
 app.add_page(search_page, route="/search")
-app.add_page(business_detail_page, route="/business/[id]")
+app.add_page(
+    business_detail_page,
+    route="/business/[id]",
+    on_load=lambda: AnalyticsState.track_page_view(UIState.current_provider["id"]),
+)
 app.add_page(get_listed_page, route="/get-listed")
 app.add_page(admin_login_page, route="/admin/login")
 app.add_page(

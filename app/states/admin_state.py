@@ -8,7 +8,7 @@ class AdminState(rx.State):
     email: str = ""
     password: str = ""
     error_message: str = ""
-    current_page: str = "App Settings"
+    current_page: str = "Analytics"
 
     @rx.var
     def is_admin_page(self) -> bool:
